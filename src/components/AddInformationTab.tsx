@@ -42,7 +42,7 @@ export function AddInformationTab() {
     }
   };
 
-  const handleConfirm = async (primaryDomain: string, secondaryDomain: string | null) => {
+  const handleConfirm = async (primaryDomain: string, secondaryDomain: string | null, keywords: string[]) => {
     setIsSaving(true);
     
     // Optimistic UI - show success immediately
@@ -54,6 +54,7 @@ export function AddInformationTab() {
         primary_domain: primaryDomain,
         secondary_domain: secondaryDomain,
         confidence: classification?.confidence || null,
+        keywords: keywords,
       });
       
       toast({

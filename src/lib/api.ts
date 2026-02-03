@@ -13,6 +13,7 @@ export interface InformationEntry {
   primary_domain: string;
   secondary_domain: string | null;
   confidence: number | null;
+  keywords: string[];
   created_at: string;
   updated_at: string;
 }
@@ -44,6 +45,7 @@ export async function saveEntry(entry: {
   primary_domain: string;
   secondary_domain: string | null;
   confidence: number | null;
+  keywords: string[];
 }): Promise<InformationEntry> {
   const { data, error } = await supabase
     .from('information_entries')
@@ -56,29 +58,29 @@ export async function saveEntry(entry: {
     throw new Error(error.message || "Failed to save entry");
   }
 
-  return data;
+  return data as InformationEntry;
 }
 
+export type RetrievalMode = 'domain' | 'keyword' | 'date';
+
 export async function getEntries(filters?: {
+  mode?: RetrievalMode;
   domain?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  keyword?: string;
+  date?: string;
 }): Promise<InformationEntry[]> {
   let query = supabase
     .from('information_entries')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (filters?.domain && filters.domain !== 'all') {
+  // Apply filter based on selected mode (independent retrieval)
+  if (filters?.mode === 'domain' && filters.domain && filters.domain !== 'all') {
     query = query.or(`primary_domain.eq.${filters.domain},secondary_domain.eq.${filters.domain}`);
-  }
-
-  if (filters?.dateFrom) {
-    query = query.gte('created_at', filters.dateFrom);
-  }
-
-  if (filters?.dateTo) {
-    query = query.lte('created_at', `${filters.dateTo}T23:59:59`);
+  } else if (filters?.mode === 'keyword' && filters.keyword) {
+    query = query.contains('keywords', [filters.keyword]);
+  } else if (filters?.mode === 'date' && filters.date) {
+    query = query.gte('created_at', filters.date).lte('created_at', `${filters.date}T23:59:59`);
   }
 
   const { data, error } = await query;
@@ -88,7 +90,7 @@ export async function getEntries(filters?: {
     throw new Error(error.message || "Failed to fetch entries");
   }
 
-  return data || [];
+  return (data || []) as InformationEntry[];
 }
 
 export async function updateEntryDomain(

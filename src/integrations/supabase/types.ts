@@ -20,6 +20,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          keywords: string[] | null
           primary_domain: string
           secondary_domain: string | null
           updated_at: string
@@ -29,6 +30,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          keywords?: string[] | null
           primary_domain: string
           secondary_domain?: string | null
           updated_at?: string
@@ -38,6 +40,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          keywords?: string[] | null
           primary_domain?: string
           secondary_domain?: string | null
           updated_at?: string

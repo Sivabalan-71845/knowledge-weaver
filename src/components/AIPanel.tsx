@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Check, Pencil, X, ChevronDown } from "lucide-react";
+import { Check, Pencil, X, ChevronDown, Plus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { ConfidenceBar } from "./ConfidenceBar";
 import { DOMAINS, type Domain } from "@/lib/domains";
 import {
@@ -17,7 +18,7 @@ interface AIPanelProps {
   secondaryDomain: string | null;
   confidence: number;
   reasoning?: string;
-  onConfirm: (primaryDomain: string, secondaryDomain: string | null) => void;
+  onConfirm: (primaryDomain: string, secondaryDomain: string | null, keywords: string[]) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -38,6 +39,10 @@ export function AIPanel({
   const [customSecondary, setCustomSecondary] = useState("");
   const [showCustomPrimary, setShowCustomPrimary] = useState(false);
   const [showCustomSecondary, setShowCustomSecondary] = useState(false);
+  
+  // Keywords state
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState("");
 
   const handlePrimarySelect = (domain: string) => {
     if (domain === "custom") {
@@ -73,8 +78,27 @@ export function AIPanel({
     }
   };
 
+  const handleAddKeyword = () => {
+    const trimmed = keywordInput.trim().toLowerCase();
+    if (trimmed && !keywords.includes(trimmed)) {
+      setKeywords([...keywords, trimmed]);
+      setKeywordInput("");
+    }
+  };
+
+  const handleRemoveKeyword = (keyword: string) => {
+    setKeywords(keywords.filter(k => k !== keyword));
+  };
+
+  const handleKeywordKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddKeyword();
+    }
+  };
+
   const handleConfirm = () => {
-    onConfirm(editedPrimary, editedSecondary);
+    onConfirm(editedPrimary, editedSecondary, keywords);
   };
 
   const handleCancelEdit = () => {
@@ -207,6 +231,47 @@ export function AIPanel({
               </p>
             )}
           </div>
+        </div>
+
+        {/* Keywords */}
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Tag className="h-4 w-4" />
+            Keywords (optional)
+          </label>
+          <div className="flex gap-2">
+            <Input
+              value={keywordInput}
+              onChange={(e) => setKeywordInput(e.target.value)}
+              placeholder="Add a keyword and press Enter"
+              onKeyDown={handleKeywordKeyDown}
+              className="flex-1"
+            />
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="icon"
+              onClick={handleAddKeyword}
+              disabled={!keywordInput.trim()}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          {keywords.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {keywords.map((keyword) => (
+                <Badge 
+                  key={keyword} 
+                  variant="secondary"
+                  className="px-3 py-1 cursor-pointer hover:bg-destructive/20 transition-colors"
+                  onClick={() => handleRemoveKeyword(keyword)}
+                >
+                  {keyword}
+                  <X className="h-3 w-3 ml-1.5" />
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Confidence */}

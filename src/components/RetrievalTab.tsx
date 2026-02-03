@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Calendar, Filter, Loader2 } from "lucide-react";
+import { Search, Calendar, Filter, Loader2, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,15 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DOMAINS } from "@/lib/domains";
-import { getEntries, type InformationEntry } from "@/lib/api";
+import { getEntries, type InformationEntry, type RetrievalMode } from "@/lib/api";
 import { format } from "date-fns";
 import { ConfidenceBar } from "./ConfidenceBar";
 
 export function RetrievalTab() {
+  const [mode, setMode] = useState<RetrievalMode>("domain");
   const [domain, setDomain] = useState<string>("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [date, setDate] = useState("");
   const [results, setResults] = useState<InformationEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -30,9 +32,10 @@ export function RetrievalTab() {
     
     try {
       const entries = await getEntries({
-        domain: domain !== "all" ? domain : undefined,
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
+        mode,
+        domain: mode === "domain" ? domain : undefined,
+        keyword: mode === "keyword" ? keyword : undefined,
+        date: mode === "date" ? date : undefined,
       });
       setResults(entries);
     } catch (error) {
@@ -44,10 +47,23 @@ export function RetrievalTab() {
 
   const handleClear = () => {
     setDomain("all");
-    setDateFrom("");
-    setDateTo("");
+    setKeyword("");
+    setDate("");
     setResults([]);
     setHasSearched(false);
+  };
+
+  const handleModeChange = (newMode: string) => {
+    setMode(newMode as RetrievalMode);
+    setResults([]);
+    setHasSearched(false);
+  };
+
+  const isSearchDisabled = () => {
+    if (mode === "domain") return domain === "all";
+    if (mode === "keyword") return !keyword.trim();
+    if (mode === "date") return !date;
+    return true;
   };
 
   return (
@@ -56,78 +72,88 @@ export function RetrievalTab() {
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Retrieve Information</h1>
         <p className="text-muted-foreground">
-          Search and filter your stored knowledge entries
+          Search your stored knowledge by domain, keyword, or date
         </p>
       </div>
 
-      {/* Filters */}
+      {/* Search Mode Tabs */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Domain Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+          <Tabs value={mode} onValueChange={handleModeChange} className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="domain" className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
-                Domain
-              </label>
-              <Select value={domain} onValueChange={setDomain}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All domains" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All domains</SelectItem>
-                  {DOMAINS.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Date From */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                By Domain
+              </TabsTrigger>
+              <TabsTrigger value="keyword" className="flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                By Keyword
+              </TabsTrigger>
+              <TabsTrigger value="date" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                From Date
-              </label>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-              />
-            </div>
+                By Date
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Date To */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                To Date
-              </label>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground invisible">Actions</label>
-              <div className="flex gap-2">
-                <Button onClick={handleSearch} disabled={isLoading} className="flex-1">
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
+            <TabsContent value="domain" className="space-y-4">
+              <div className="flex gap-3">
+                <Select value={domain} onValueChange={setDomain}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select a domain" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Select a domain...</SelectItem>
+                    {DOMAINS.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleSearch} disabled={isLoading || isSearchDisabled()}>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 </Button>
                 <Button variant="outline" onClick={handleClear}>
                   Clear
                 </Button>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="keyword" className="space-y-4">
+              <div className="flex gap-3">
+                <Input
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder="Enter keyword to search"
+                  className="flex-1"
+                  onKeyDown={(e) => e.key === "Enter" && !isSearchDisabled() && handleSearch()}
+                />
+                <Button onClick={handleSearch} disabled={isLoading || isSearchDisabled()}>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+                <Button variant="outline" onClick={handleClear}>
+                  Clear
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="date" className="space-y-4">
+              <div className="flex gap-3">
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleSearch} disabled={isLoading || isSearchDisabled()}>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+                <Button variant="outline" onClick={handleClear}>
+                  Clear
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
@@ -163,6 +189,17 @@ export function RetrievalTab() {
                       ? `${entry.content.substring(0, 400)}...` 
                       : entry.content}
                   </p>
+
+                  {/* Keywords */}
+                  {entry.keywords && entry.keywords.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {entry.keywords.map((kw) => (
+                        <Badge key={kw} variant="outline" className="text-xs">
+                          {kw}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Confidence */}
                   {entry.confidence && (

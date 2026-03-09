@@ -49,13 +49,15 @@ Rules:
 3. If the text is ambiguous, choose the best fitting domain and assign lower confidence
 4. Confidence is a percentage (0-100) reflecting how certain you are
 5. For ambiguous or general text, use "General" as primary with appropriate low confidence
+6. Extract 3-5 relevant keywords from the text. Keywords should be short (1-2 words), lowercase, and capture the key topics/concepts
 
 Return ONLY valid JSON in this exact format:
 {
   "primary_domain": "string",
   "secondary_domain": "string or null",
   "confidence": number,
-  "reasoning": "brief explanation"
+  "reasoning": "brief explanation",
+  "suggested_keywords": ["keyword1", "keyword2", "keyword3"]
 }`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -118,6 +120,13 @@ Return ONLY valid JSON in this exact format:
     }
 
     // Validate and sanitize the response
+    const suggestedKeywords = Array.isArray(classification.suggested_keywords)
+      ? classification.suggested_keywords
+          .filter((k: unknown) => typeof k === 'string')
+          .map((k: string) => k.trim().toLowerCase())
+          .slice(0, 5)
+      : [];
+
     const result = {
       primary_domain: DOMAINS.includes(classification.primary_domain) 
         ? classification.primary_domain 
@@ -128,7 +137,8 @@ Return ONLY valid JSON in this exact format:
       confidence: typeof classification.confidence === 'number' 
         ? Math.min(100, Math.max(0, Math.round(classification.confidence)))
         : 50,
-      reasoning: classification.reasoning || "Classification complete"
+      reasoning: classification.reasoning || "Classification complete",
+      suggested_keywords: suggestedKeywords
     };
 
     console.log("Classification result:", result);

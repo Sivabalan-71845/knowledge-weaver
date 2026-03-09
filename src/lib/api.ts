@@ -5,6 +5,7 @@ export interface ClassificationResult {
   secondary_domain: string | null;
   confidence: number;
   reasoning: string;
+  suggested_keywords?: string[];
 }
 
 export interface InformationEntry {

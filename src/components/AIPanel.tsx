@@ -45,6 +45,7 @@ export function AIPanel({
   // Keywords state
   const [keywords, setKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState("");
+  const [showManualInput, setShowManualInput] = useState(false);
 
   const handlePrimarySelect = (domain: string) => {
     if (domain === "custom") {

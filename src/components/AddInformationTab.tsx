@@ -163,6 +163,7 @@ export function AddInformationTab() {
               secondaryDomain={classification.secondary_domain}
               confidence={classification.confidence}
               reasoning={classification.reasoning}
+              suggestedKeywords={classification.suggested_keywords}
               onConfirm={handleConfirm}
               onCancel={handleCancel}
               isLoading={isSaving}

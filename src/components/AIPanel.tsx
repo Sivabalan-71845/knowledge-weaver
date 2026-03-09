@@ -240,26 +240,33 @@ export function AIPanel({
         <div className="space-y-3">
           <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Tag className="h-4 w-4" />
-            Keywords (optional)
+            Keywords
           </label>
-          <div className="flex gap-2">
-            <Input
-              value={keywordInput}
-              onChange={(e) => setKeywordInput(e.target.value)}
-              placeholder="Add a keyword and press Enter"
-              onKeyDown={handleKeywordKeyDown}
-              className="flex-1"
-            />
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="icon"
-              onClick={handleAddKeyword}
-              disabled={!keywordInput.trim()}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+          
+          {/* AI Suggested Keywords */}
+          {suggestedKeywords.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">AI Suggestions — click to add:</p>
+              <div className="flex flex-wrap gap-2">
+                {suggestedKeywords.filter(sk => !keywords.includes(sk)).map((keyword) => (
+                  <Badge
+                    key={keyword}
+                    variant="outline"
+                    className="px-3 py-1 cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
+                    onClick={() => setKeywords([...keywords, keyword])}
+                  >
+                    <Plus className="h-3 w-3 mr-1.5" />
+                    {keyword}
+                  </Badge>
+                ))}
+                {suggestedKeywords.every(sk => keywords.includes(sk)) && (
+                  <span className="text-xs text-muted-foreground italic">All suggestions added</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Selected Keywords */}
           {keywords.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {keywords.map((keyword) => (
@@ -273,6 +280,39 @@ export function AIPanel({
                   <X className="h-3 w-3 ml-1.5" />
                 </Badge>
               ))}
+            </div>
+          )}
+
+          {/* Manual entry toggle */}
+          {!showManualInput ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowManualInput(true)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Pencil className="h-3.5 w-3.5 mr-1.5" />
+              Enter manually
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                placeholder="Type a keyword and press Enter"
+                onKeyDown={handleKeywordKeyDown}
+                className="flex-1"
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={handleAddKeyword}
+                disabled={!keywordInput.trim()}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </div>

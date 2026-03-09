@@ -29,6 +29,7 @@ export function AIPanel({
   secondaryDomain,
   confidence,
   reasoning,
+  suggestedKeywords = [],
   onConfirm,
   onCancel,
   isLoading = false,

@@ -18,6 +18,7 @@ interface AIPanelProps {
   secondaryDomain: string | null;
   confidence: number;
   reasoning?: string;
+  suggestedKeywords?: string[];
   onConfirm: (primaryDomain: string, secondaryDomain: string | null, keywords: string[]) => void;
   onCancel: () => void;
   isLoading?: boolean;
